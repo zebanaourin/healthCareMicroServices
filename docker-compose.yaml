@@ -30,18 +30,18 @@ services:
       - mysql
     restart: always
 
-  eureka_service:
-    image: eureka:latest  # Replace with the actual image name if you have a specific Eureka image
-    container_name: eureka-service
+  eureka:
+    build: ./discovery-service
+    container_name: eureka
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     ports:
-      - "8761:8761"  # Default port for Eureka
+      - "8761:8761"
     networks:
       - mysql
       - mongo
     restart: always
-    depends_on:
-      - mongo
-      - mysql
+
   patient_service:
     build: ./patient-service
     container_name: patient-service
@@ -50,6 +50,7 @@ services:
     ports:
       - "8100:8100"
     depends_on:
+      - eureka
       - mysql
     networks:
       - mysql
@@ -63,9 +64,11 @@ services:
       - "8200:8200"
     depends_on:
       - mongo
+      - eureka
     networks:
       - mongo
     restart: always
+
   appointment_service:
     build: ./appointment-service
     container_name: appointment-service
@@ -76,6 +79,7 @@ services:
     depends_on:
       - mysql
       - mongo
+      - eureka
     networks:
       - mysql
       - mongo
