@@ -1,0 +1,82 @@
+networks:
+  mongo:
+  mysql:
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    networks:
+      - mongo
+    restart: always
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: patient_service
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - mysql
+    restart: always
+
+  eureka_service:
+    image: eureka:latest  # Replace with the actual image name if you have a specific Eureka image
+    container_name: eureka-service
+    ports:
+      - "8761:8761"  # Default port for Eureka
+    networks:
+      - mysql
+      - mongo
+    restart: always
+    depends_on:
+      - mongo
+      - mysql
+  patient_service:
+    build: ./patient-service
+    container_name: patient-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - "8100:8100"
+    depends_on:
+      - mysql
+    networks:
+      - mysql
+    restart: always
+  doctor_service:
+    build: ./doctor-service
+    container_name: doctor-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - "8200:8200"
+    depends_on:
+      - mongo
+    networks:
+      - mongo
+    restart: always
+  appointment_service:
+    build: ./appointment-service
+    container_name: appointment-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    ports:
+      - "8300:8300"
+    depends_on:
+      - mysql
+      - mongo
+    networks:
+      - mysql
+      - mongo
+    restart: always
